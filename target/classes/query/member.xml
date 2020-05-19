@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wt.client.member.dao.MemberDAO">
+	<!-- 회원 가입 인서트 -->
+	<insert id="join" parameterType="member">
+		INSERT INTO client_tbl 
+		VALUES( #{c_id}
+		, #{c_pwd}
+		, #{c_email}
+		, #{c_name}
+		, #{c_phone}
+		, sysdate
+		, '1')
+	</insert>
+
+	<!-- 로그인 -->
+	<select id="login" resultType="member" parameterType="member">
+		SELECT c_id, c_pwd
+		FROM client_tbl
+		WHERE c_id = #{c_id}
+		AND c_pwd = #{c_pwd}
+	</select>
+
+	<!-- 패스워드 체크 -->
+	<select id="pwChk" resultType="int" parameterType="member">
+		SELECT COUNT(*) FROM client_tbl
+		WHERE c_id = #{c_id}
+		AND c_pwd = #{c_pwd}
+	</select>
+
+	<!-- 아이디 중복 체크 -->
+	<select id="idChk" resultType="int" parameterType="member">
+		SELECT COUNT(*) FROM client_tbl
+		WHERE c_id = #{c_id}
+	</select>
+
+	<!-- 회원정보수정 비민번호확인 -->
+	<select id="memberModifyPwChk" parameterType="member" resultType="member">
+	SELECT FROM client_tbl
+	WHERE c_id = #{c_id}
+		AND c_pwd = #{c_pwd}
+	</select>
+	
+	<!-- 회원정보수정 -->
+	<update id="modifySuccess" parameterType="member" >
+	 UPDATE client_tbl
+	 set
+	 c_name = #{c_name},
+	 c_pwd = #{c_pwd},
+	 c_email = #{c_email},
+	 c_phone = #{c_phone}
+	 where c_id = #{c_id}
+	</update>
+	
+	<!-- 마이페이지 비밀번호 확인 -->
+	<select id="memberListPwd" parameterType="member" resultType="member">
+		SELECT c_pwd
+		FROM client_tbl
+		WHERE c_id = #{c_id} AND c_pwd = #{c_pwd}
+	</select>
+	
+	<select id="memberReserve" parameterType="String" resultType="res">
+		SELECT r_num, TO_CHAR(r_reservedate, 'yyyy-mm-dd') r_reserveDate, TO_CHAR(r_enddate, 'yyyy-mm-dd') r_endDate, r_floor, r_room, r_price, r_company, r_status
+		FROM reservation_tbl
+		WHERE c_id = #{c_id} AND r_status = '0'
+		ORDER BY r_num DESC
+	</select>
+	
+	<select id="memberUse" parameterType="String" resultType="res">
+		SELECT r_num, TO_CHAR(r_reservedate, 'yyyy-mm-dd') r_reserveDate, TO_CHAR(r_enddate, 'yyyy-mm-dd') r_endDate, r_floor, r_room, r_price, r_company, r_status
+		FROM reservation_tbl
+		WHERE c_id = #{c_id} AND r_status IN ('1', '2')
+		ORDER BY r_num DESC
+	</select>
+	
+	<select id="memberDone" parameterType="String" resultType="res">
+		SELECT r_num, TO_CHAR(r_reservedate, 'yyyy-mm-dd') r_reserveDate, TO_CHAR(r_enddate, 'yyyy-mm-dd') r_endDate, r_floor, r_room, r_price, r_company, r_status
+		FROM reservation_tbl
+		WHERE c_id = #{c_id} AND NOT r_status IN ('0', '1', '2')
+		ORDER BY r_num DESC
+	</select>
+	
+	<!-- 회원탈퇴 -->
+	<delete id="memberDelete" parameterType="member">
+		UPDATE client_tbl
+		SET c_disabled = '0'
+		WHERE c_id = #{c_id}
+		AND c_pwd = #{c_pwd}
+	</delete>
+	
+	<!-- 회원 상세정보(환불 요청 가능) -->
+	<select id="memberDetailForm" parameterType="int" resultType="res">
+		SELECT *
+		FROM reservation_tbl
+		WHERE r_num = #{value}
+	</select>
+	
+	<!-- 환불 요청 -->
+	<update id="memberRefund" parameterType="res">
+		UPDATE reservation_tbl
+		SET r_status = '2'
+		WHERE r_num = #{r_num}
+	</update>
+
+</mapper>

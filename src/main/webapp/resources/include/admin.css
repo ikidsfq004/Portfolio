@@ -1,0 +1,29 @@
+@charset "UTF-8";
+
+.title-menu {
+	text-align: center;
+	text-decoration: none;
+	font-size: 14px;
+}
+
+
+#f_question{
+	width: 630px;
+	height: 30px;
+}
+
+#f_answer{
+	width: 630px;
+}
+
+input[type=text], textarea{
+width: 630px;	
+}
+
+.qnaList{
+	margin-top: 30px;
+}
+
+.menuList{
+	margin-left: 10px;
+}

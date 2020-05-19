@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.wt.admin.reservation.dao.MoveInDAO">
+
+	<sql id="moveInCommon">
+		select r_num, c_id, r_phone, r_member, r_reservedate,
+		r_regdate,
+		r_status
+		from reservation_tbl
+
+		<if test="search=='cancle'">
+			<where>r_status='5'</where>
+		</if>
+		<if test="search=='wait'">
+			<where>r_status='0'</where>
+		</if>
+		<if test="search=='viewAll'">
+			<where>r_status='5' or r_status='0'</where>
+		</if>
+		<if test="search==''">
+			<where>r_status='5' or r_status='0'</where>
+		</if>
+		
+		<choose>
+			<when test="order_sc=='ASC'">order by r_reservedate asc, r_num desc</when>
+			<when test="order_sc=='DESC'">order by r_reservedate desc, r_num desc</when>
+		</choose>
+
+	</sql>
+
+	<select id="moveInList" parameterType="moveIn"
+		resultType="moveIn">
+		select r_num, c_id, r_phone, r_member, to_char(r_reservedate,
+		'yyyy-mm-dd') as r_reservedate, to_char(r_regdate, 'yyyy-mm-dd') as
+		r_regdate, r_status
+		from (select
+		list.*, rownum
+		as rnum from(
+		<include refid="moveInCommon"></include>
+		) list
+		)
+		<where>
+			<if test="start_row != null and start_row != ''">
+				<if test="end_row!= null and end_row != ''">
+					rnum between #{start_row} and #{end_row}
+				</if>
+			</if>
+		</where>
+		
+	</select>
+
+	<select id="moveInListCnt" parameterType="moveIn"
+		resultType="int">
+		select nvl(count(1), 0) from(
+		select list.*, rownum as rnum
+		from(
+		<include refid="moveInCommon"></include>
+		) list
+		)
+	</select>
+
+	<select id="newRequest" parameterType="moveIn" resultType="int">
+		select count (*) from reservation_tbl where r_status='0'
+	</select>
+
+	<select id="moveInDetail" parameterType="moveIn"
+		resultType="moveIn">
+		select c_id, r_regdate, r_phone, r_floor, r_room, r_member,
+		to_char(r_reservedate, 'yyyy-mm-dd') as r_reservedate,
+		to_char(r_enddate, 'yyyy-mm-dd') as r_enddate, r_price, r_status ,
+		r_num
+		from reservation_tbl where r_num=#{r_num}
+	</select>
+
+	<!-- 승인 버튼 클릭 시 상태를 계약으로 변경 -->
+	<update id="updateReqState" parameterType="int">
+		update
+		reservation_tbl
+		set
+		r_status='1', r_regdate=sysdate
+		where
+		r_num=#{r_num}
+	</update>
+	
+	<!-- 승인한 호실 예약 가능 상태를 불가능으로 변경 -->
+	<update id="updateReserve" parameterType="adminRoom">
+	update
+	office_tbl
+	set
+	o_reserve='1'
+	where o_floor=#{o_floor} and o_room=#{o_room}
+	</update>
+</mapper>
